@@ -12,7 +12,7 @@ const PDF_LOGO_URL = 'pharma-clinical-logo.png';
 
 // ── SUPABASE CONFIG ─────────────────────────────────────────────────
 const SUPABASE_URL   = 'https://kdemdaxrnwjezdmvpvsh.supabase.co';
-const SUPABASE_KEY   = 'sb_publishable_ysM9DDneQJCxbr9ZL3akCg_nsfs1k_E';
+const SUPABASE_KEY   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkZW1kYXhybndqZXpkbXZwdnNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2ODE4NjQsImV4cCI6MjA5NjI1Nzg2NH0.2oZIHRBluaxQYjvIHSbBA756WwOtrNZqLHSMBPBF6bI';
 const SUPABASE_TABLE = 'productos';
 // ────────────────────────────────────────────────────────────────────
 
