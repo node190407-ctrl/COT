@@ -11,7 +11,7 @@ const JSON_URL = 'productos.json';
 const PDF_LOGO_URL = 'pharma-clinical-logo.png';
 
 // ── SUPABASE CONFIG ─────────────────────────────────────────────────
-const SUPABASE_URL   = 'https://kdemdaxrnwjezdmvpvsh.supabase.co/rest/v1/';
+const SUPABASE_URL   = 'https://kdemdaxrnwjezdmvpvsh.supabase.co';
 const SUPABASE_KEY   = 'sb_publishable_ysM9DDneQJCxbr9ZL3akCg_nsfs1k_E';
 const SUPABASE_TABLE = 'productos';
 // ────────────────────────────────────────────────────────────────────
