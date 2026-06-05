@@ -37,10 +37,26 @@
             <p class="panel-kicker">Catálogo</p>
             <h2>Selecciona productos</h2>
           </div>
-          <button class="ghost-btn" id="recargarBtn" type="button">Recargar catálogo</button>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button class="ghost-btn" id="recargarBtn" type="button">Recargar catálogo</button>
+            <label id="importarExcelLabel" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#2c6784,#3a7c9c);color:#fff;font-weight:700;border-radius:16px;padding:12px 16px;font-size:inherit;border:none;transition:.2s ease;" title="Sube tu propio archivo Excel (.xlsx)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Importar Excel
+              <input type="file" id="importarExcelInput" accept=".xlsx,.xls" style="display:none;" />
+            </label>
+            <button class="ghost-btn" id="agregarManualBtn" type="button" style="background:linear-gradient(135deg,#4fb7ba,#3aa8aa);color:#fff;border-color:transparent;">+ Producto manual</button>
+          </div>
         </div>
 
         <div class="status-bar" id="statusBar">Cargando catálogo...</div>
+
+        <!-- Zona drag & drop Excel -->
+        <div id="dropZone" style="display:none;margin:10px 18px 0;border:2px dashed rgba(44,103,132,.30);border-radius:18px;padding:22px;text-align:center;background:rgba(79,183,186,.04);cursor:pointer;transition:.2s ease;" aria-label="Zona para arrastrar archivo Excel">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4fb7ba" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="12" y2="12"/><line x1="15" y1="15" x2="12" y2="12"/></svg>
+          <p style="margin:0 0 4px;font-weight:700;color:#2c6784;font-size:.95rem;">Arrastra tu archivo Excel aquí</p>
+          <p style="margin:0;color:#6d7f8d;font-size:.82rem;">o haz clic en <strong>Importar Excel</strong> para buscarlo</p>
+          <p style="margin:6px 0 0;color:#9fbec9;font-size:.78rem;">Columnas esperadas: Código · Producto · P.&nbsp;Venta · P.&nbsp;Mayoreo · Existencia · Departamento · IVA</p>
+        </div>
 
         <div class="toolbar">
           <label class="field grow">
@@ -203,6 +219,64 @@
       </div>
     </article>
   </template>
+
+
+  <!-- ===== MODAL: AGREGAR PRODUCTO MANUAL ===== -->
+  <div id="modalManual" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(22,56,74,.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:24px;box-shadow:0 32px 80px rgba(22,56,74,.18);padding:28px 28px 24px;width:min(94vw,480px);max-height:90vh;overflow-y:auto;font-family:Montserrat,system-ui,sans-serif;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+        <div>
+          <p style="margin:0 0 4px;font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#4fb7ba;">Producto manual</p>
+          <h2 style="margin:0;font-size:1.2rem;font-weight:800;color:#17384a;">Agregar producto libre</h2>
+        </div>
+        <button id="modalManualClose" type="button" style="border:none;background:#f1f7f8;border-radius:12px;width:36px;height:36px;cursor:pointer;font-size:1.2rem;color:#5a7b8f;font-weight:700;">✕</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <label style="display:flex;flex-direction:column;gap:6px;grid-column:1/-1;">
+          <span style="font-size:.78rem;font-weight:700;color:#6d7f8d;">Nombre del producto *</span>
+          <input id="mNombre" type="text" placeholder="Ej: Paracetamol 500mg" style="border:1px solid rgba(33,67,90,.15);border-radius:12px;padding:10px 13px;font-size:.95rem;color:#21435a;font-family:inherit;outline:none;" />
+        </label>
+        <label style="display:flex;flex-direction:column;gap:6px;">
+          <span style="font-size:.78rem;font-weight:700;color:#6d7f8d;">Código (opcional)</span>
+          <input id="mCodigo" type="text" placeholder="Ej: SKU-001" style="border:1px solid rgba(33,67,90,.15);border-radius:12px;padding:10px 13px;font-size:.95rem;color:#21435a;font-family:inherit;outline:none;" />
+        </label>
+        <label style="display:flex;flex-direction:column;gap:6px;">
+          <span style="font-size:.78rem;font-weight:700;color:#6d7f8d;">Departamento (opcional)</span>
+          <input id="mDepartamento" type="text" placeholder="Ej: Medicamentos" style="border:1px solid rgba(33,67,90,.15);border-radius:12px;padding:10px 13px;font-size:.95rem;color:#21435a;font-family:inherit;outline:none;" />
+        </label>
+        <label style="display:flex;flex-direction:column;gap:6px;">
+          <span style="font-size:.78rem;font-weight:700;color:#6d7f8d;">Tipo de producto (opcional)</span>
+          <input id="mTipo" type="text" placeholder="Ej: Analgésico" style="border:1px solid rgba(33,67,90,.15);border-radius:12px;padding:10px 13px;font-size:.95rem;color:#21435a;font-family:inherit;outline:none;" />
+        </label>
+        <label style="display:flex;flex-direction:column;gap:6px;">
+          <span style="font-size:.78rem;font-weight:700;color:#6d7f8d;">Precio venta *</span>
+          <input id="mPrecioVenta" type="number" min="0" step="0.01" placeholder="0.00" style="border:1px solid rgba(33,67,90,.15);border-radius:12px;padding:10px 13px;font-size:.95rem;color:#21435a;font-family:inherit;outline:none;" />
+        </label>
+        <label style="display:flex;flex-direction:column;gap:6px;">
+          <span style="font-size:.78rem;font-weight:700;color:#6d7f8d;">Precio mayoreo</span>
+          <input id="mPrecioMayoreo" type="number" min="0" step="0.01" placeholder="0.00" style="border:1px solid rgba(33,67,90,.15);border-radius:12px;padding:10px 13px;font-size:.95rem;color:#21435a;font-family:inherit;outline:none;" />
+        </label>
+        <label style="display:flex;flex-direction:column;gap:6px;">
+          <span style="font-size:.78rem;font-weight:700;color:#6d7f8d;">Cantidad inicial</span>
+          <input id="mCantidad" type="number" min="1" value="1" style="border:1px solid rgba(33,67,90,.15);border-radius:12px;padding:10px 13px;font-size:.95rem;color:#21435a;font-family:inherit;outline:none;" />
+        </label>
+        <label style="display:flex;flex-direction:column;gap:6px;">
+          <span style="font-size:.78rem;font-weight:700;color:#6d7f8d;">IVA (%)</span>
+          <select id="mIva" style="border:1px solid rgba(33,67,90,.15);border-radius:12px;padding:10px 13px;font-size:.95rem;color:#21435a;font-family:inherit;outline:none;background:#fff;">
+            <option value="0.16">16% (estándar)</option>
+            <option value="0">0% (exento)</option>
+            <option value="0.08">8% (frontera)</option>
+          </select>
+        </label>
+      </div>
+      <p id="mError" style="display:none;margin:10px 0 0;font-size:.82rem;color:#a23d3d;background:#fff3f3;border:1px solid #fdc9c9;border-radius:10px;padding:8px 12px;">Por favor escribe el nombre y el precio de venta.</p>
+      <div style="display:flex;gap:10px;margin-top:18px;">
+        <button id="modalManualCancelar" type="button" style="flex:1;padding:13px;border-radius:14px;border:1px solid rgba(33,67,90,.12);background:#edf5f8;color:#2c6784;font-weight:700;cursor:pointer;font-family:inherit;font-size:.95rem;">Cancelar</button>
+        <button id="modalManualConfirmar" type="button" style="flex:2;padding:13px;border-radius:14px;border:none;background:linear-gradient(135deg,#2c6784,#3a7c9c);color:#fff;font-weight:700;cursor:pointer;font-family:inherit;font-size:.95rem;">Agregar a cotización</button>
+      </div>
+    </div>
+  </div>
+  <!-- ===== FIN MODAL ===== -->
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
