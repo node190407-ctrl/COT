@@ -6,9 +6,9 @@ const state = {
   incluirImpuestos: true
 };
 
-const XLSX_URL = 'inventario.xlsx';
+const XLSX_URL = 'inventario1.xlsx';
 const JSON_URL = 'productos.json';
-const PDF_LOGO_URL = 'logotipo-clinico-farmacéutico.png';
+const PDF_LOGO_URL = 'pharma-clinical-logo.png';
 
 const catalogoBody = document.getElementById('catalogoBody');
 const filtroDepartamento = document.getElementById('filtroDepartamento');
@@ -774,3 +774,232 @@ syncDepartamentoPlaceholder();
 setToday();
 attachEvents();
 loadProductos();
+
+// =====================================================================
+// IMPORTAR EXCEL DESDE INTERFAZ (como eleventa)
+// =====================================================================
+(function initImportarExcel() {
+  const fileInput   = document.getElementById('importarExcelInput');
+  const dropZone    = document.getElementById('dropZone');
+  const labelBtn    = document.getElementById('importarExcelLabel');
+
+  // Mostrar zona drag&drop solo después de que cargue el catálogo base
+  document.addEventListener('DOMContentLoaded', () => {
+    // Pequeño delay para que el catálogo base se haya intentado cargar
+    setTimeout(() => { if (dropZone) dropZone.style.display = 'block'; }, 1800);
+  });
+
+  // ── Leer archivo Excel y cargar al catálogo ──────────────────────
+  function procesarArchivoExcel(file) {
+    if (!file) return;
+
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!['xlsx', 'xls'].includes(ext)) {
+      setStatus('El archivo seleccionado no es un Excel válido (.xlsx o .xls).', 'error');
+      return;
+    }
+
+    if (typeof XLSX === 'undefined') {
+      setStatus('La librería XLSX no está disponible. Recarga la página.', 'error');
+      return;
+    }
+
+    setStatus(`Leyendo "${file.name}"...`, 'warn');
+
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+      try {
+        const data     = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet    = workbook.Sheets[workbook.SheetNames[0]];
+        const rows     = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+        if (!rows.length) {
+          setStatus('El archivo Excel está vacío o no tiene datos en la primera hoja.', 'error');
+          return;
+        }
+
+        // Normalizar usando la misma función que ya tiene el cotizador
+        const nuevosProductos = rows.map(normalizeProducto).filter(Boolean);
+
+        if (!nuevosProductos.length) {
+          setStatus('No se encontraron productos válidos. Verifica que el Excel tenga las columnas: Código, Producto, P. Venta.', 'warn');
+          return;
+        }
+
+        // Preguntar al usuario si quiere reemplazar o agregar al catálogo actual
+        const tieneProductos = state.productos.length > 0;
+        let accion = 'reemplazar';
+
+        if (tieneProductos) {
+          const elegir = confirm(
+            `Se encontraron ${nuevosProductos.length} productos en "${file.name}".\n\n` +
+            `Catálogo actual: ${state.productos.length} productos.\n\n` +
+            `¿Deseas REEMPLAZAR el catálogo actual?\n` +
+            `(Cancelar = agregar al catálogo existente sin borrar nada)`
+          );
+          accion = elegir ? 'reemplazar' : 'agregar';
+        }
+
+        if (accion === 'reemplazar') {
+          state.productos = nuevosProductos;
+        } else {
+          // Agregar evitando duplicados por código+nombre
+          nuevosProductos.forEach(np => {
+            const duplicado = state.productos.find(
+              p => p.codigo === np.codigo && p.producto === np.producto
+            );
+            if (!duplicado) state.productos.push(np);
+          });
+        }
+
+        hydrateCatalog(
+          `Excel "${file.name}" importado. ${accion === 'reemplazar' ? 'Catálogo reemplazado' : 'Productos agregados'} correctamente.`
+        );
+
+        // Limpiar input para permitir subir el mismo archivo otra vez
+        fileInput.value = '';
+
+        // Ocultar dropzone después de importar exitosamente
+        dropZone.style.display = 'none';
+        setTimeout(() => { dropZone.style.display = 'block'; }, 1000);
+
+      } catch (err) {
+        console.error('Error al leer el Excel:', err);
+        setStatus('No se pudo leer el archivo Excel. Asegúrate de que sea un .xlsx válido y no esté abierto en otra app.', 'error');
+      }
+    };
+
+    reader.onerror = function() {
+      setStatus('Error al leer el archivo. Intenta de nuevo.', 'error');
+    };
+
+    reader.readAsArrayBuffer(file);
+  }
+
+  // ── Evento: click en el botón Importar Excel ─────────────────────
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) procesarArchivoExcel(file);
+  });
+
+  // ── Eventos: Drag & Drop en la zona ─────────────────────────────
+  ['dragenter', 'dragover'].forEach(evt => {
+    dropZone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor   = '#4fb7ba';
+      dropZone.style.background    = 'rgba(79,183,186,.10)';
+    });
+  });
+
+  ['dragleave', 'dragend'].forEach(evt => {
+    dropZone.addEventListener(evt, () => {
+      dropZone.style.borderColor = 'rgba(44,103,132,.30)';
+      dropZone.style.background  = 'rgba(79,183,186,.04)';
+    });
+  });
+
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.style.borderColor = 'rgba(44,103,132,.30)';
+    dropZone.style.background  = 'rgba(79,183,186,.04)';
+    const file = e.dataTransfer.files[0];
+    if (file) procesarArchivoExcel(file);
+  });
+
+  // Clic en la zona también abre el selector de archivo
+  dropZone.addEventListener('click', () => fileInput.click());
+
+})();
+// =====================================================================
+
+// =====================================================================
+// AGREGAR PRODUCTO MANUAL
+// =====================================================================
+(function initManualModal() {
+  const modal        = document.getElementById('modalManual');
+  const btnAbrir     = document.getElementById('agregarManualBtn');
+  const btnCerrar    = document.getElementById('modalManualClose');
+  const btnCancelar  = document.getElementById('modalManualCancelar');
+  const btnConfirmar = document.getElementById('modalManualConfirmar');
+  const errorMsg     = document.getElementById('mError');
+
+  const campos = {
+    nombre:       document.getElementById('mNombre'),
+    codigo:       document.getElementById('mCodigo'),
+    departamento: document.getElementById('mDepartamento'),
+    tipo:         document.getElementById('mTipo'),
+    precioVenta:  document.getElementById('mPrecioVenta'),
+    precioMayoreo:document.getElementById('mPrecioMayoreo'),
+    cantidad:     document.getElementById('mCantidad'),
+    iva:          document.getElementById('mIva'),
+  };
+
+  function abrirModal() {
+    Object.values(campos).forEach(el => { if (el.tagName !== 'SELECT') el.value = ''; });
+    campos.cantidad.value     = '1';
+    campos.iva.value          = '0.16';
+    errorMsg.style.display    = 'none';
+    modal.style.display       = 'flex';
+    campos.nombre.focus();
+  }
+
+  function cerrarModal() { modal.style.display = 'none'; }
+
+  function confirmar() {
+    const nombre = campos.nombre.value.trim();
+    const venta  = parseFloat(campos.precioVenta.value);
+    if (!nombre || isNaN(venta) || venta < 0) {
+      errorMsg.style.display = 'block';
+      campos.nombre.focus();
+      return;
+    }
+    errorMsg.style.display = 'none';
+
+    const mayoreo  = parseFloat(campos.precioMayoreo.value) || venta;
+    const cantidad = Math.max(1, parseInt(campos.cantidad.value) || 1);
+    const tasaIva  = parseFloat(campos.iva.value) || 0;
+    const codigo   = campos.codigo.value.trim()       || 'MANUAL';
+    const depto    = campos.departamento.value.trim() || 'Sin departamento';
+    const tipo     = campos.tipo.value.trim()         || 'Producto manual';
+
+    const productoManual = {
+      codigo, producto: nombre,
+      venta, mayoreo, costo: 0,
+      existencia: 999, invMin: 0, invMax: 999,
+      departamento: depto, tipo,
+      iva: tasaIva, ieps: 0,
+      _manual: true
+    };
+
+    const existing = state.cart.find(
+      i => i._manual && i.codigo === codigo && i.producto === nombre
+    );
+    if (existing) {
+      existing.cantidad += cantidad;
+    } else {
+      state.cart.push({
+        ...productoManual,
+        cantidad,
+        precio: state.modoPrecio === 'mayoreo' ? mayoreo : venta,
+      });
+    }
+
+    renderCart();
+    cerrarModal();
+  }
+
+  btnAbrir.addEventListener('click', abrirModal);
+  btnCerrar.addEventListener('click', cerrarModal);
+  btnCancelar.addEventListener('click', cerrarModal);
+  btnConfirmar.addEventListener('click', confirmar);
+  modal.addEventListener('click', e => { if (e.target === modal) cerrarModal(); });
+  modal.addEventListener('keydown', e => {
+    if (e.key === 'Enter')  confirmar();
+    if (e.key === 'Escape') cerrarModal();
+  });
+  campos.nombre.addEventListener('input',     () => { errorMsg.style.display = 'none'; });
+  campos.precioVenta.addEventListener('input', () => { errorMsg.style.display = 'none'; });
+})();
+// =====================================================================
