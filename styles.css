@@ -19,7 +19,7 @@ body{
 }
 button,input,select,textarea{font:inherit}
 .page-shell{max-width:1420px;margin:0 auto;padding:16px 18px}
-.hero{position:relative;border-radius:32px;overflow:hidden;min-height:320px;background:url("assets/brand-cover.webp") center/cover no-repeat;box-shadow:var(--shadow)}
+.hero{position:relative;border-radius:32px;overflow:hidden;min-height:320px;background:url("brand-cover.webp") center/cover no-repeat;box-shadow:var(--shadow)}
 .hero-overlay{position:absolute;inset:0;background:linear-gradient(110deg, rgba(44,103,132,.83), rgba(44,103,132,.50) 45%, rgba(79,183,186,.20))}
 .hero-content{position:relative;z-index:1;padding:34px;display:flex;flex-direction:column;gap:26px}
 .brand-line{display:flex;gap:28px;align-items:center}
