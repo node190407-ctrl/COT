@@ -8,7 +8,7 @@ const state = {
 
 const XLSX_URL = 'inventario1.xlsx';
 const JSON_URL = 'productos.json';
-const PDF_LOGO_URL = 'logotipo-clínico-farmacéutico.png';
+const PDF_LOGO_URL = 'pharma-clinical-logo.png';
 
 // ── SUPABASE CONFIG ─────────────────────────────────────────────────
 const SUPABASE_URL   = 'https://kdemdaxrnwjezdmvpvsh.supabase.co';
